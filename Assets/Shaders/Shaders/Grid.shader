@@ -3,6 +3,7 @@ Shader "Unlit/Grid"
     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
+    [HDR]_GridColour("Grid Colour", Color) = (255, 0, 0, 0)
     }
     SubShader
     {
@@ -33,6 +34,7 @@ Shader "Unlit/Grid"
             };
 
             sampler2D _MainTex;
+            float4 _GridColour;
             float4 _MainTex_ST;
 
             v2f vert (appdata v)
@@ -44,13 +46,28 @@ Shader "Unlit/Grid"
                 return o;
             }
 
-            fixed4 frag (v2f i) : SV_Target
+            float GridTest(float2 r)
+            {
+                float result;
+                for (float i = 0.0; i < 1.0; i += 0.1)
+                {
+                    for (int j = 0; j < 2; j++)
+                    {
+                        result += 1.0 - smoothstep(0.0, 0.004, abs(r[j] - i));
+                    }
+                }
+                return result;
+            }
+
+            fixed4 frag(v2f i) : SV_Target
             {
                 // sample the texture
-                fixed4 col = tex2D(_MainTex, i.uv);
+               // fixed4 col = tex2D(_MainTex, i.uv);
                 // apply fog
-                UNITY_APPLY_FOG(i.fogCoord, col);
-                return col;
+                //UNITY_APPLY_FOG(i.fogCoord, col);
+                fixed4 gridColour = (_GridColour * GridTest(i.uv)) + tex2D(_MainTex, i.uv);
+
+                return float4(gridColour);
             }
             ENDCG
         }
